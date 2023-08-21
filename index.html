@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Stitcher by medic gordus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #181818;
+            color: #f5f5f5;
+            text-align: center;
+            padding: 50px 0;
+            line-height: 1.6;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ccc;
+        }
+
+        #topLeftCanvasPreview, #topRightCanvasPreview, #bottomLeftCanvasPreview, #bottomRightCanvasPreview {
+            width: 303.5px;
+            height: 512px;
+        }
+
+        #topLeftCanvas, #topRightCanvas, #bottomLeftCanvas, #bottomRightCanvas {
+            display: none;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+            color: #f5f5f5;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        input[type="file"]:hover {
+            background-color: #555;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            color: #f5f5f5;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+        .centered-container {
+            width: 80%; /* or any other width you prefer */
+            max-width: 900px; /* this ensures it doesn't become too wide on large screens */
+            margin: 0 auto; /* centers the container */
+            padding: 20px; /* optional: adds some space around your list */
+            background: #222; /* optional: gives the container a background color */
+            border-radius: 8px; /* optional: rounds the corners */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* optional: adds a subtle shadow */
+        }
+
+        ol {
+            padding-left: 20px; /* restores the padding for the list */
+        }
+
+        li {
+            margin-bottom: 10px;
+            text-align: left; /* ensures the list is left-aligned */
+        }
+
+        footer {
+            position: fixed;    /* Ensures it's at the bottom of the viewport */
+            bottom: 0;
+            width: 100%;
+            background-color: #111;    /* Darker shade for contrast */
+            color: #f5f5f5;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            border-top: 1px solid #333;  /* Optional: adds a subtle top border */
+        }
+
+        a {
+            color: #57AFFF; /* Brighter shade of blue */
+            text-decoration: none; /* Removes the default underline */
+            transition: color 0.3s ease; /* Smooth transition for hover effects */
+        }
+
+        a:hover, a:focus {
+            color: #2E8BDC; /* Slightly darker shade for hover */
+            text-decoration: underline; /* Add underline on hover for clarity */
+        }
+
+        a:active {
+            color: #0056b3; /* Even darker shade for active state */
+        }
+
+        a:visited {
+            color: #4A88C3; /* A slightly muted shade for visited links */
+        }
+        table.images {
+            margin: 0 auto; /* centers the container */
+            border-collapse: separate;  /* This is necessary for border-spacing to work */
+            border-spacing: 10px;       /* Adjust this value to your desired spacing */
+        }
+        td.images {
+            border-color:#f5f5f5;
+            border-style: solid;
+            border-width: 1px;
+            padding:5px;
+        }
+        hr {
+            border: none; /* Remove the default border */
+            height: 1px;  /* Define the thickness of your line */
+            background-color: #f5f5f5;  /* Change this to your desired color */
+        }
+    </style>
+</head>
+</head>
+<body>
+    <h1>𝕏 image stitcher inspired by <a href="https://x.com/johnkrausphotos">@johnkrausphotos</a></h1>
+    <p>You can download this html file and use it offline: No server upload or processing is performed on this page 😋</p>
+    <div class="centered-container">
+        <button id="toggleList" onclick="toggleList()">Show Instructions</button>
+        <ol id="instructionsList">
+            <li>Select your primary image that will be split into four pieces</li>
+            <li>Select your surrounding images</li>
+            <p>(Review if you want to fill and crop any of the images to fill the empty space)</p>
+            <li>Press Download on each</li>
+        </ol>
+        <p>Note: Copying raw data image to clipboard on iOS is not allowed so it will not work.</p>
+    </div>
+    <label for="imgInput1">Primary image (this will split into 4 pictures)</label><br />
+    <input type="file" id="imgInput1" accept="image/*" onchange="processImages()"><label><input type="checkbox" id="scaleCheck1" onchange="processImages()" checked> Fill & Crop</label><br />
+    <div class="centered-container">
+        <table class="images">
+            <tr>
+                <td class="images">
+                    <label for="imgInput2">Top of first image</label><br />
+                    <input type="file" id="imgInput2" accept="image/*" onchange="processTopLeftImage()"><label><input type="checkbox" id="scaleCheck2" onchange="processTopLeftImage()" checked> Fill & Crop</label>
+                    <hr />
+                    <label for="imgInput2">Bottom of first image</label><br />
+                    <input type="file" id="imgInput3" accept="image/*" onchange="processTopLeftImage()"><label><input type="checkbox" id="scaleCheck3" onchange="processTopLeftImage()" checked> Fill & Crop</label>
+                </td>
+                <td class="images">
+                    <label for="imgInput4">Top of second image</label><br />
+                    <input type="file" id="imgInput4" accept="image/*" onchange="processTopRightImage()"><label><input type="checkbox" id="scaleCheck4" onchange="processTopRightImage()" checked> Fill & Crop</label>
+                    <hr />
+                    <label for="imgInput5">Bottom of second image</label><br />
+                    <input type="file" id="imgInput5" accept="image/*" onchange="processTopRightImage()"><label><input type="checkbox" id="scaleCheck5" onchange="processTopRightImage()" checked> Fill & Crop</label>
+                </td>
+            </tr>
+            <tr>
+                <td class="images">
+                    <label for="imgInput6">Top of third image</label><br />
+                    <input type="file" id="imgInput6" accept="image/*" onchange="processBottomLeftImage()"><label><input type="checkbox" id="scaleCheck6" onchange="processBottomLeftImage()" checked> Fill & Crop</label>
+                    <hr />
+                    <label for="imgInput7">Bottom of third image</label><br />
+                    <input type="file" id="imgInput7" accept="image/*" onchange="processBottomLeftImage()"><label><input type="checkbox" id="scaleCheck7" onchange="processBottomLeftImage()" checked> Fill & Crop</label>
+                </td>
+                <td class="images">
+                    <label for="imgInput8">Top of fourth image</label><br />
+                    <input type="file" id="imgInput8" accept="image/*" onchange="processBottomRightImage()"><label><input type="checkbox" id="scaleCheck8" onchange="processBottomRightImage()" checked> Fill & Crop</label>
+                    <hr />
+                    <label for="imgInput9">Bottom of fourth image</label><br />
+                    <input type="file" id="imgInput9" accept="image/*" onchange="processBottomRightImage()"><label><input type="checkbox" id="scaleCheck9" onchange="processBottomRightImage()" checked> Fill & Crop</label>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="centered-container">
+        <!-- started to get red flagged by security on browsers for doing this. Disabling for now.
+        <button onclick="downloadAllImages()">Download All 4 images</button>
+        -->
+        <table>
+            <tr>
+                <td>
+                    <canvas id="topLeftCanvas"></canvas>
+                    <canvas id="topLeftCanvasPreview"></canvas>
+                    <button onclick="downloadTopLeftImage()">Download</button> <button onclick="copyTopLeftToClipboard()">Copy</button>
+                </td>
+                <td>
+                    <canvas id="topRightCanvas"></canvas>
+                    <canvas id="topRightCanvasPreview"></canvas>
+                    <button onclick="downloadTopRightImage()">Download</button> <button onclick="copyTopRightToClipboard()">Copy</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <canvas id="bottomLeftCanvas"></canvas>
+                    <canvas id="bottomLeftCanvasPreview"></canvas>
+                    <button onclick="downloadBottomLeftImage()">Download</button> <button onclick="copyBottomLeftToClipboard()">Copy</button>
+                </td>
+                <td>
+                    <canvas id="bottomRightCanvas"></canvas>
+                    <canvas id="bottomRightCanvasPreview"></canvas>
+                    <button onclick="downloadBottomRightImage()">Download</button> <button onclick="copyBottomRightToClipboard()">Copy</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        document.getElementById('instructionsList').style.display = "none";
+
+        function processImages() {
+            processTopLeftImage();
+            processTopRightImage();
+            processBottomLeftImage();
+            processBottomRightImage();
+        }
+
+        function drawScaledImage(ctx, img, desiredWidth, desiredHeight, fillAndCrop, yOffset) {
+            if (fillAndCrop) {
+                const aspectRatioImg = img.width / img.height;
+                const aspectRatioTarget = desiredWidth / desiredHeight;
+
+                let sourceX = 0;
+                let sourceY = 0;
+                let sourceWidth = img.width;
+                let sourceHeight = img.height;
+
+                if (aspectRatioImg > aspectRatioTarget) {
+                    // Image is wider than target
+                    sourceWidth = img.height * aspectRatioTarget;
+                    sourceX = (img.width - sourceWidth) / 2;
+                } else {
+                    // Image is taller than target
+                    sourceHeight = img.width / aspectRatioTarget;
+                    sourceY = (img.height - sourceHeight) / 2;
+                }
+
+                ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, yOffset, desiredWidth, desiredHeight);
+            } else {
+                const scale = Math.min(desiredWidth / img.width, desiredHeight / img.height);
+                const scaledWidth = img.width * scale;
+                const scaledHeight = img.height * scale;
+                
+                const offsetX = (desiredWidth - scaledWidth) / 2;
+                const offsetY = (desiredHeight - scaledHeight) / 2;
+                
+                ctx.drawImage(img, offsetX, yOffset + offsetY, scaledWidth, scaledHeight);
+            }
+        }
+
+        function processTopLeftImage() {
+            let img1 = document.getElementById("imgInput1").files[0];
+            let img2 = document.getElementById("imgInput2").files[0];
+            let img3 = document.getElementById("imgInput3").files[0];
+
+            // ensure they are ready
+            if (img1 && img2 && img3)
+            {
+                let canvasTemp = document.createElement('canvas');
+                let ctxTemp = canvasTemp.getContext('2d');
+                var desiredWidth = 2438;
+                var desiredHeight = 1376;
+                canvasTemp.width = desiredWidth;
+                canvasTemp.height = desiredHeight;
+
+                var topLeft;
+                var topRight;
+                var bottomLeft;
+                var bottomRight;
+
+                let imgToSplit = new Image();
+                const image2 = new Image();
+                const image3 = new Image();
+                imgToSplit.onload = function() {
+                    image2.onload = function() {
+                        image3.onload = function() {
+                            // scale and crop
+                            drawScaledImage(ctxTemp, imgToSplit, desiredWidth, desiredHeight, document.getElementById('scaleCheck1').checked, 0);
+
+                            // cut into four pieces
+                            topLeft = ctxTemp.getImageData(0, 0, 1214, 682.6667);
+
+                            /* unused here
+                            topRight = ctxTemp.getImageData(1224, 0, 1214, 682.6667);
+                            bottomLeft = ctxTemp.getImageData(0, 693.3333, 1214, 682.6667);
+                            bottomRight = ctxTemp.getImageData(1224, 693.3333, 1214, 682.6667);
+                            */
+
+                            // Now we have the four images (topLeft, topRight, bottomLeft, bottomRight)
+
+
+                            let canvasOutput = document.getElementById('topLeftCanvas');
+                            canvasOutput.width = 1214;
+                            canvasOutput.height = 2048;
+                            let ctxOutput = canvasOutput.getContext('2d');
+                            
+                            drawScaledImage(ctxOutput, image2, 1214, 682.6667, document.getElementById('scaleCheck2').checked, 0);
+                            ctxOutput.putImageData(topLeft, 0, 682.6667);
+                            drawScaledImage(ctxOutput, image3, 1214, 682.6667, document.getElementById('scaleCheck3').checked, 682.6667 * 2);
+
+                            // Draw a scaled-down preview
+                            let previewCanvas = document.getElementById('topLeftCanvasPreview');
+                            previewCanvas.width = 303.5;
+                            previewCanvas.height = 512;
+                            let previewCtx = previewCanvas.getContext('2d');
+
+                            // Here, we're drawing the content of canvas onto previewCanvas scaled down
+                            previewCtx.drawImage(canvasOutput, 0, 0, canvasOutput.width, canvasOutput.height, 0, 0, previewCanvas.width, previewCanvas.height);
+                        }
+                        image3.src = URL.createObjectURL(img3);
+                    }
+                    image2.src = URL.createObjectURL(img2);
+                };
+                imgToSplit.src = URL.createObjectURL(img1);
+            }
+        }
+
+        function processTopRightImage() {
+            let img1 = document.getElementById("imgInput1").files[0];
+            let img2 = document.getElementById("imgInput4").files[0];
+            let img3 = document.getElementById("imgInput5").files[0];
+
+            // ensure they are ready
+            if (img1 && img2 && img3)
+            {
+                let canvasTemp = document.createElement('canvas');
+                let ctxTemp = canvasTemp.getContext('2d');
+                var desiredWidth = 2438;
+                var desiredHeight = 1376;
+                canvasTemp.width = desiredWidth;
+                canvasTemp.height = desiredHeight;
+
+                var topRight;
+
+                let imgToSplit = new Image();
+                const image2 = new Image();
+                const image3 = new Image();
+                imgToSplit.onload = function() {
+                    image2.onload = function() {
+                        image3.onload = function() {
+                            // scale and crop
+                            drawScaledImage(ctxTemp, imgToSplit, desiredWidth, desiredHeight, document.getElementById('scaleCheck1').checked, 0);
+
+                            // cut into four pieces
+                            topRight = ctxTemp.getImageData(1224, 0, 1214, 682.6667);
+
+                            let canvasOutput = document.getElementById('topRightCanvas');
+                            canvasOutput.width = 1214;
+                            canvasOutput.height = 2048;
+                            let ctxOutput = canvasOutput.getContext('2d');
+                            
+                            drawScaledImage(ctxOutput, image2, 1214, 682.6667, document.getElementById('scaleCheck4').checked, 0);
+                            ctxOutput.putImageData(topRight, 0, 682.6667);
+                            drawScaledImage(ctxOutput, image3, 1214, 682.6667, document.getElementById('scaleCheck5').checked, 682.6667 * 2);
+
+                            // Draw a scaled-down preview
+                            let previewCanvas = document.getElementById('topRightCanvasPreview');
+                            previewCanvas.width = 303.5;
+                            previewCanvas.height = 512;
+                            let previewCtx = previewCanvas.getContext('2d');
+
+                            // Here, we're drawing the content of canvas onto previewCanvas scaled down
+                            previewCtx.drawImage(canvasOutput, 0, 0, canvasOutput.width, canvasOutput.height, 0, 0, previewCanvas.width, previewCanvas.height);
+                        }
+                        image3.src = URL.createObjectURL(img3);
+                    }
+                    image2.src = URL.createObjectURL(img2);
+                };
+                imgToSplit.src = URL.createObjectURL(img1);
+            }
+        }
+
+        function processBottomLeftImage() {
+            let img1 = document.getElementById("imgInput1").files[0];
+            let img2 = document.getElementById("imgInput6").files[0];
+            let img3 = document.getElementById("imgInput7").files[0];
+
+            // ensure they are ready
+            if (img1 && img2 && img3)
+            {
+                let canvasTemp = document.createElement('canvas');
+                let ctxTemp = canvasTemp.getContext('2d');
+                var desiredWidth = 2438;
+                var desiredHeight = 1376;
+                canvasTemp.width = desiredWidth;
+                canvasTemp.height = desiredHeight;
+
+                var bottomLeft;
+
+                let imgToSplit = new Image();
+                const image2 = new Image();
+                const image3 = new Image();
+                imgToSplit.onload = function() {
+                    image2.onload = function() {
+                        image3.onload = function() {
+                            // scale and crop
+                            drawScaledImage(ctxTemp, imgToSplit, desiredWidth, desiredHeight, document.getElementById('scaleCheck1').checked, 0);
+
+                            // cut into four pieces
+                            topLeft = ctxTemp.getImageData(0, 0, 1214, 682.6667);
+
+                            bottomLeft = ctxTemp.getImageData(0, 693.3333, 1214, 682.6667);
+
+                            let canvasOutput = document.getElementById('bottomLeftCanvas');
+                            canvasOutput.width = 1214;
+                            canvasOutput.height = 2048;
+                            let ctxOutput = canvasOutput.getContext('2d');
+                            
+                            drawScaledImage(ctxOutput, image2, 1214, 682.6667, document.getElementById('scaleCheck6').checked, 0);
+                            ctxOutput.putImageData(bottomLeft, 0, 682.6667);
+                            drawScaledImage(ctxOutput, image3, 1214, 682.6667, document.getElementById('scaleCheck7').checked, 682.6667 * 2);
+
+                            // Draw a scaled-down preview
+                            let previewCanvas = document.getElementById('bottomLeftCanvasPreview');
+                            previewCanvas.width = 303.5;
+                            previewCanvas.height = 512;
+                            let previewCtx = previewCanvas.getContext('2d');
+
+                            // Here, we're drawing the content of canvas onto previewCanvas scaled down
+                            previewCtx.drawImage(canvasOutput, 0, 0, canvasOutput.width, canvasOutput.height, 0, 0, previewCanvas.width, previewCanvas.height);
+                        }
+                        image3.src = URL.createObjectURL(img3);
+                    }
+                    image2.src = URL.createObjectURL(img2);
+                };
+                imgToSplit.src = URL.createObjectURL(img1);
+            }
+        }
+
+        function processBottomRightImage() {
+            let img1 = document.getElementById("imgInput1").files[0];
+            let img2 = document.getElementById("imgInput8").files[0];
+            let img3 = document.getElementById("imgInput9").files[0];
+
+            // ensure they are ready
+            if (img1 && img2 && img3)
+            {
+                let canvasTemp = document.createElement('canvas');
+                let ctxTemp = canvasTemp.getContext('2d');
+                var desiredWidth = 2438;
+                var desiredHeight = 1376;
+                canvasTemp.width = desiredWidth;
+                canvasTemp.height = desiredHeight;
+
+                var bottomRight;
+
+                let imgToSplit = new Image();
+                const image2 = new Image();
+                const image3 = new Image();
+                imgToSplit.onload = function() {
+                    image2.onload = function() {
+                        image3.onload = function() {
+                            // scale and crop
+                            drawScaledImage(ctxTemp, imgToSplit, desiredWidth, desiredHeight, document.getElementById('scaleCheck1').checked, 0);
+
+                            // cut into four pieces
+                            topLeft = ctxTemp.getImageData(0, 0, 1214, 682.6667);
+
+                            bottomRight = ctxTemp.getImageData(1224, 693.3333, 1214, 682.6667);
+
+                            let canvasOutput = document.getElementById('bottomRightCanvas');
+                            canvasOutput.width = 1214;
+                            canvasOutput.height = 2048;
+                            let ctxOutput = canvasOutput.getContext('2d');
+                            
+                            drawScaledImage(ctxOutput, image2, 1214, 682.6667, document.getElementById('scaleCheck8').checked, 0);
+                            ctxOutput.putImageData(bottomRight, 0, 682.6667);
+                            drawScaledImage(ctxOutput, image3, 1214, 682.6667, document.getElementById('scaleCheck9').checked, 682.6667 * 2);
+
+                            // Draw a scaled-down preview
+                            let previewCanvas = document.getElementById('bottomRightCanvasPreview');
+                            previewCanvas.width = 303.5;
+                            previewCanvas.height = 512;
+                            let previewCtx = previewCanvas.getContext('2d');
+
+                            // Here, we're drawing the content of canvas onto previewCanvas scaled down
+                            previewCtx.drawImage(canvasOutput, 0, 0, canvasOutput.width, canvasOutput.height, 0, 0, previewCanvas.width, previewCanvas.height);
+                        }
+                        image3.src = URL.createObjectURL(img3);
+                    }
+                    image2.src = URL.createObjectURL(img2);
+                };
+                imgToSplit.src = URL.createObjectURL(img1);
+            }
+        }
+
+        function toggleList() {
+            const list = document.getElementById('instructionsList');
+            const button = document.getElementById('toggleList');
+
+            if (list.style.display === "none") {
+                list.style.display = "block";
+                button.innerText = "Hide Instructions";
+            } else {
+                list.style.display = "none";
+                button.innerText = "Show Instructions";
+            }
+        }
+
+        function downloadAllImages() {
+            downloadTopLeftImage();
+            downloadTopRightImage();
+            downloadBottomLeftImage();
+            downloadBottomRightImage();
+        }
+
+        function downloadTopLeftImage() {
+            const canvas = document.getElementById('topLeftCanvas');
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'topLeftStitched.png';
+            link.click();
+        }
+        function downloadTopRightImage() {
+            const canvas = document.getElementById('topRightCanvas');
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'topRightStitched.png';
+            link.click();
+        }
+        function downloadBottomLeftImage() {
+            const canvas = document.getElementById('bottomLeftCanvas');
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'bottomLeftStitched.png';
+            link.click();
+        }
+        function downloadBottomRightImage() {
+            const canvas = document.getElementById('bottomRightCanvas');
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'bottomRightStitched.png';
+            link.click();
+        }
+        
+        async function copyTopLeftToClipboard() {
+            await copyToClipboardAsync('topLeftCanvas')
+        }
+        async function copyTopRightToClipboard() {
+            await copyToClipboardAsync('topRightCanvas')
+        }
+        async function copyBottomLeftToClipboard() {
+            await copyToClipboardAsync('bottomLeftCanvas')
+        }
+        async function copyBottomRightToClipboard() {
+            await copyToClipboardAsync('bottomRightCanvas')
+        }
+
+        async function copyToClipboardAsync(canvasId) {
+            try {
+                const canvas = document.getElementById(canvasId);
+                const imgBlob = await new Promise(resolve => canvas.toBlob(resolve));
+                
+                const data = [new ClipboardItem({ 'image/png': imgBlob })];
+
+                await navigator.clipboard.write(data);
+                alert('Image copied to clipboard!');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to copy image to clipboard.');
+            }
+        }
+    </script>
+    <footer>
+        Created by <a href="https://x.com/medicgordus">@medicgordus</a> using guidance from ChatGPT by <a href="https://x.com/OpenAI">@OpenAI</a>
+    </footer>
+</body>
+</html>
